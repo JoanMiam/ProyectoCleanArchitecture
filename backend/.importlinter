@@ -1,0 +1,39 @@
+[importlinter]
+root_packages =
+    src
+include_external_packages = True
+
+[importlinter:contract:domain-isolation]
+name = Domain must not import from application, infrastructure, interfaces, or external frameworks
+type = forbidden
+source_modules =
+    src.domain
+forbidden_modules =
+    src.application
+    src.infrastructure
+    src.interfaces
+    fastapi
+    sqlalchemy
+    pydantic
+    redis
+    boto3
+
+[importlinter:contract:application-isolation]
+name = Application must not import from infrastructure or interfaces
+type = forbidden
+source_modules =
+    src.application
+forbidden_modules =
+    src.infrastructure
+    src.interfaces
+    fastapi
+    sqlalchemy
+    boto3
+
+[importlinter:contract:infrastructure-no-interfaces]
+name = Infrastructure must not import from interfaces
+type = forbidden
+source_modules =
+    src.infrastructure
+forbidden_modules =
+    src.interfaces

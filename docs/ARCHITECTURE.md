@@ -1,0 +1,87 @@
+# Architecture
+
+## Clean Architecture — Regla de dependencias
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  interfaces/  (HTTP routers, workers)                   │
+│  ┌───────────────────────────────────────────────────┐  │
+│  │  infrastructure/  (SQLAlchemy, MinIO, Redis, JWT) │  │
+│  │  ┌─────────────────────────────────────────────┐  │  │
+│  │  │  application/  (use cases, ports/ABCs, DTOs)│  │  │
+│  │  │  ┌───────────────────────────────────────┐  │  │  │
+│  │  │  │  domain/  (entities, value objects,   │  │  │  │
+│  │  │  │           policies, events, exceptions)│  │  │  │
+│  │  │  └───────────────────────────────────────┘  │  │  │
+│  │  └─────────────────────────────────────────────┘  │  │
+│  └───────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Regla:** las flechas apuntan hacia adentro. `domain/` no importa NADA externo.
+Enforced por `import-linter` en CI — un PR que viola la regla no mergea.
+
+## Capas
+
+### domain/
+- `entities/`: Inspection (aggregate root), Observation, Evidence
+- `value_objects/`: InspectionStatus, Version, IDs
+- `policies/`: ConflictPolicy, MergePolicy, AuthPolicy
+- `events/`: domain events (InspectionCreated, etc.)
+- `exceptions/`: DomainError, InvalidStateError, etc.
+
+**Sin imports de FastAPI, SQLAlchemy, Pydantic, Redis.** Solo stdlib.
+
+### application/
+- `ports/`: interfaces (ABCs) — InspectionRepository, UnitOfWork, Clock, AuthContext, etc.
+- `use_cases/`: orquestaciones — CreateInspection, EditInspection, ApplyChangesBatch, etc.
+- `dto/`: dataclasses neutras (no Pydantic) para input/output de use cases
+
+**Sin imports de infrastructure/ o interfaces/.**
+
+### infrastructure/
+- `persistence/sqlalchemy/`: modelos ORM, mappers ORM↔Domain, implementaciones de repos
+- `storage/minio_storage.py`: FileStorageGateway impl
+- `queue/rq_queue.py`: QueueGateway impl
+- `auth/`: JWT provider, password hasher
+- `clock/system_clock.py`: Clock impl
+
+### interfaces/
+- `http/`: FastAPI app, routers, schemas Pydantic, presenters, deps (DI)
+- `workers/`: RQ workers para audit y proyecciones
+
+## C4 — Vista de contenedores
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  Mobile App (Flutter/Android)                                │
+│  [offline-first client]                                      │
+│       │ sync batch (HTTP POST /sync/batch)                   │
+│       ▼                                                       │
+│  Backend API (FastAPI)  ──────────────────────────────────┐  │
+│       │                                                    │  │
+│       ├──► PostgreSQL 16 (estado autoritativo)             │  │
+│       ├──► Redis + RQ (jobs asíncronos)                    │  │
+│       └──► MinIO (evidencias/archivos)                     │  │
+│                                                            │  │
+│  Web SPA (React + Vite) ──► Backend API (read-only)        │  │
+└──────────────────────────────────────────────────────────────┘
+```
+
+## Protocolo de sincronización
+
+Ver [SYNC_PROTOCOL.md](SYNC_PROTOCOL.md).
+
+## Quality tools
+
+| Tool | Propósito |
+|---|---|
+| Docker Compose | Entorno reproducible |
+| GitHub Actions | CI: lint + type + test en cada PR |
+| Ruff | Linter + formatter Python |
+| mypy (strict) | Type checking Python |
+| import-linter | Enforce regla de dependencias |
+| pytest + coverage | Tests + gate ≥85% en domain/application |
+| dart analyze | Lint Flutter |
+| ESLint + Prettier | Lint web |
+| vitest | Tests web |
