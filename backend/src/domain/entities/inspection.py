@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from src.domain.entities.evidence import Evidence
 from src.domain.entities.observation import Observation
@@ -16,11 +16,7 @@ from src.domain.events import (
     ObservationEdited,
     ObservationRemoved,
 )
-from src.domain.exceptions import (
-    InvalidStateError,
-    InvariantViolation,
-    ObservationNotFound,
-)
+from src.domain.exceptions import InvalidStateError, ObservationNotFound
 from src.domain.value_objects.ids import (
     EvidenceId,
     InspectionId,
@@ -87,7 +83,12 @@ class Inspection:
     # Mutations
     # ------------------------------------------------------------------
 
-    def edit(self, title: str | None = None, location: str | None = None, now: datetime | None = None) -> None:
+    def edit(
+        self,
+        title: str | None = None,
+        location: str | None = None,
+        now: datetime | None = None,
+    ) -> None:
         self._assert_editable()
         if title is not None:
             self.title = title
@@ -109,7 +110,12 @@ class Inspection:
         self.observations.append(obs)
         self._bump_version(now)
         self._events.append(
-            ObservationAdded(occurred_at=now, inspection_id=self.id, observation_id=obs.id, added_by=actor)
+            ObservationAdded(
+                occurred_at=now,
+                inspection_id=self.id,
+                observation_id=obs.id,
+                added_by=actor,
+            )
         )
         return obs
 
@@ -127,7 +133,12 @@ class Inspection:
         self._bump_version(now)
         if actor and now:
             self._events.append(
-                ObservationEdited(occurred_at=now, inspection_id=self.id, observation_id=obs.id, edited_by=actor)
+                ObservationEdited(
+                    occurred_at=now,
+                    inspection_id=self.id,
+                    observation_id=obs.id,
+                    edited_by=actor,
+                )
             )
 
     def remove_observation(self, observation_id: ObservationId, actor: UserId, now: datetime) -> None:
@@ -136,7 +147,12 @@ class Inspection:
         self.observations = [o for o in self.observations if o.id != observation_id]
         self._bump_version(now)
         self._events.append(
-            ObservationRemoved(occurred_at=now, inspection_id=self.id, observation_id=obs.id, removed_by=actor)
+            ObservationRemoved(
+                occurred_at=now,
+                inspection_id=self.id,
+                observation_id=obs.id,
+                removed_by=actor,
+            )
         )
 
     def attach_evidence(
@@ -166,14 +182,20 @@ class Inspection:
         self.evidences.append(evidence)
         self._bump_version(now)
         self._events.append(
-            EvidenceAttached(occurred_at=now, inspection_id=self.id, evidence_id=evidence_id, attached_by=actor)
+            EvidenceAttached(
+                occurred_at=now,
+                inspection_id=self.id,
+                evidence_id=evidence_id,
+                attached_by=actor,
+            )
         )
         return evidence
 
     def submit(self, actor: UserId, now: datetime) -> None:
         if not self.status.can_submit():
             raise InvalidStateError(
-                f"Cannot submit inspection with status '{self.status}'. Must be DRAFT or IN_PROGRESS."
+                f"Cannot submit inspection with status '{self.status}'. "
+                "Must be DRAFT or IN_PROGRESS."
             )
         self.status = InspectionStatus.SUBMITTED
         self._bump_version(now)
@@ -221,4 +243,6 @@ class Inspection:
         for obs in self.observations:
             if obs.id == observation_id:
                 return obs
-        raise ObservationNotFound(f"Observation '{observation_id}' not found in inspection '{self.id}'.")
+        raise ObservationNotFound(
+            f"Observation '{observation_id}' not found in inspection '{self.id}'."
+        )
