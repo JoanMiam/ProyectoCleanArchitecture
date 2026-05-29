@@ -1,8 +1,7 @@
 """Fakes for all ports — fast, in-memory, no IO."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timedelta
 from types import TracebackType
 from typing import Self
 from uuid import UUID
@@ -24,13 +23,12 @@ from src.domain.value_objects.ids import InspectionId
 
 class FakeClock(Clock):
     def __init__(self, fixed: datetime | None = None) -> None:
-        self._now = fixed or datetime(2026, 1, 15, 10, 0, 0, tzinfo=timezone.utc)
+        self._now = fixed or datetime(2026, 1, 15, 10, 0, 0, tzinfo=UTC)
 
     def now(self) -> datetime:
         return self._now
 
     def advance(self, seconds: int) -> None:
-        from datetime import timedelta
         self._now = self._now + timedelta(seconds=seconds)
 
 
