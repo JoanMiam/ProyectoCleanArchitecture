@@ -23,39 +23,45 @@ Enforced por `import-linter` en CI — un PR que viola la regla no mergea.
 
 ## Capas
 
+> **Leyenda de estado:** ✅ implementado · 🔲 previsto (pendiente de issue)
+
 ### domain/
-- `entities/`: Inspection (aggregate root), Observation, Evidence
-- `value_objects/`: InspectionStatus, Version, IDs
-- `policies/`: ConflictPolicy, MergePolicy, AuthPolicy
-- `events/`: domain events (InspectionCreated, etc.)
-- `exceptions/`: DomainError, InvalidStateError, etc.
+- `entities/` ✅: Inspection (aggregate root), Observation, Evidence
+- `value_objects/` ✅: InspectionStatus, Version, IDs
+- `policies/` 🔲: ConflictPolicy, MergePolicy (INS-3)
+- `events.py` 🔲: domain events — ConflictDetected, ConflictResolved, ChangeApplied (INS-3)
+- `exceptions/` 🔲: DomainError, InvalidStateError
 
 **Sin imports de FastAPI, SQLAlchemy, Pydantic, Redis.** Solo stdlib.
 
 ### application/
-- `ports/`: interfaces (ABCs) — InspectionRepository, UnitOfWork, Clock, AuthContext, etc.
-- `use_cases/`: orquestaciones — CreateInspection, EditInspection, ApplyChangesBatch, etc.
-- `dto/`: dataclasses neutras (no Pydantic) para input/output de use cases
+- `ports/` ✅ parcial: InspectionRepository, UnitOfWork, Clock, AuthContext
+- `ports/` 🔲: ChangeSetRepository, ConflictRepository, AuditRepository, FileStorageGateway, QueueGateway (INS-4)
+- `use_cases/` ✅: CreateInspection, EditInspection
+- `use_cases/` 🔲: GetInspection, ListInspections, AddObservation, SubmitInspection (INS-13), ApplyChangesBatch (INS-6), ResolveConflict (INS-7), AttachEvidence (INS-9), Login (INS-14)
+- `dto/` ✅ parcial: CreateInspectionDTO, EditInspectionDTO
+- `dto/` 🔲: sync DTOs — ChangeSet, SyncBatch, ServerDelta, ConflictResult (INS-2)
 
 **Sin imports de infrastructure/ o interfaces/.**
 
 ### infrastructure/
-- `persistence/sqlalchemy/`: modelos ORM, mappers ORM↔Domain, implementaciones de repos
-- `storage/minio_storage.py`: FileStorageGateway impl
-- `queue/rq_queue.py`: QueueGateway impl
-- `auth/`: JWT provider, password hasher
-- `clock/system_clock.py`: Clock impl
+- `persistence/sqlalchemy/` 🔲: modelos ORM, mappers ORM↔Domain, repositorios concretos (INS-5)
+- `storage/minio_storage.py` 🔲: FileStorageGateway impl (INS-9)
+- `queue/` 🔲: QueueGateway impl (INS-4/INS-10)
+- `auth/` 🔲: JWT provider, password hasher (INS-14)
+- `clock/system_clock.py` ✅: Clock impl
 
 ### interfaces/
-- `http/`: FastAPI app, routers, schemas Pydantic, presenters, deps (DI)
-- `workers/`: RQ workers para audit y proyecciones
+- `http/routers/` 🔲: inspections, sync, evidences, auth, audit (INS-8)
+- `http/schemas/` 🔲: Pydantic schemas — solo en esta capa (INS-8)
+- `http/deps.py` 🔲: dependencias FastAPI, AuthContext (INS-14)
+- `workers/` 🔲: RQ workers para audit y proyecciones (INS-10)
 
 ## C4 — Vista de contenedores
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  Mobile App (Flutter/Android)                                │
-│  [offline-first client]                                      │
+│  Web Client (React + Vite) [MVP — cliente mínimo de demo]    │
 │       │ sync batch (HTTP POST /sync/batch)                   │
 │       ▼                                                       │
 │  Backend API (FastAPI)  ──────────────────────────────────┐  │
@@ -64,7 +70,7 @@ Enforced por `import-linter` en CI — un PR que viola la regla no mergea.
 │       ├──► Redis + RQ (jobs asíncronos)                    │  │
 │       └──► MinIO (evidencias/archivos)                     │  │
 │                                                            │  │
-│  Web SPA (React + Vite) ──► Backend API (read-only)        │  │
+│  Mobile App (Flutter/Android) ── extensión futura (no MVP) │  │
 └──────────────────────────────────────────────────────────────┘
 ```
 

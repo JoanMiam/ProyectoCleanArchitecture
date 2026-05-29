@@ -7,7 +7,7 @@ Sistema de inspecciones de campo con sincronización offline, control de version
 ## Quick-start (5 comandos)
 
 ```bash
-git clone <repo-url> && cd ProyectoClean
+git clone <repo-url> && cd ProyectoCleanArchitecture
 cp .env.example .env
 make up
 make migrate
@@ -21,10 +21,10 @@ make seed
 ## Estructura
 
 ```
-ProyectoClean/
+ProyectoCleanArchitecture/
 ├── backend/    FastAPI + Clean Architecture (domain → application → infrastructure → interfaces)
-├── mobile/     Flutter offline-first (Android)
-├── web/        React + Vite panel de supervisión
+├── mobile/     Flutter offline-first (Android) — extensión futura, fuera del MVP
+├── web/        React + Vite cliente mínimo de demo (MVP)
 ├── infra/      PostgreSQL init, MinIO policies
 └── docs/       Arquitectura, protocolo sync, onboarding
 ```
@@ -38,8 +38,8 @@ ProyectoClean/
 | `make migrate` | Correr migraciones Alembic |
 | `make seed` | Datos de prueba |
 | `make test` | Tests backend (pytest) |
-| `make test-mobile` | Tests Flutter |
-| `make lint` | Ruff + mypy + dart analyze |
+| `make test-mobile` | Tests Flutter (fuera de MVP) |
+| `make lint` | Ruff + mypy + import-linter |
 | `make logs` | Ver logs de todos los servicios |
 
 ## Arquitectura
