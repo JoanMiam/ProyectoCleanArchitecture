@@ -1,5 +1,5 @@
 """TDD tests for Inspection aggregate root."""
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 import pytest
@@ -10,16 +10,16 @@ from src.domain.value_objects.ids import EvidenceId, InspectionId, UserId
 from src.domain.value_objects.inspection_status import InspectionStatus
 from src.domain.value_objects.version import Version
 
-NOW = datetime(2026, 1, 15, 10, 0, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 1, 15, 10, 0, 0, tzinfo=UTC)
 ACTOR = UserId(UUID("00000000-0000-0000-0000-000000000001"))
 
 
 def make_inspection(**kwargs: object) -> Inspection:
-    defaults = dict(
-        id=InspectionId(uuid4()),
-        created_by=ACTOR,
-        now=NOW,
-    )
+    defaults = {
+        "id": InspectionId(uuid4()),
+        "created_by": ACTOR,
+        "now": NOW,
+    }
     defaults.update(kwargs)
     return Inspection.create(
         id=defaults["id"],  # type: ignore[arg-type]
@@ -93,7 +93,12 @@ class TestInspectionEditing:
 class TestObservations:
     def test_add_observation_to_draft_succeeds(self) -> None:
         inspection = make_inspection()
-        obs = inspection.add_observation(title="Crack in wall", notes="5cm crack", actor=ACTOR, now=NOW)
+        obs = inspection.add_observation(
+            title="Crack in wall",
+            notes="5cm crack",
+            actor=ACTOR,
+            now=NOW,
+        )
         assert len(inspection.observations) == 1
         assert obs.title == "Crack in wall"
 
@@ -117,6 +122,7 @@ class TestObservations:
 
     def test_edit_nonexistent_observation_raises(self) -> None:
         from src.domain.value_objects.ids import ObservationId
+
         inspection = make_inspection()
         with pytest.raises(ObservationNotFound):
             inspection.edit_observation(ObservationId(uuid4()), notes="x")
