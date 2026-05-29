@@ -7,7 +7,7 @@ from src.application.dto.create_inspection_dto import CreateInspectionInput
 from src.application.dto.edit_inspection_dto import EditInspectionInput
 from src.application.use_cases.create_inspection import CreateInspection
 from src.application.use_cases.edit_inspection import EditInspection
-from src.domain.exceptions import InspectionNotFound, InvalidStateError
+from src.domain.exceptions import InspectionNotFoundError, InvalidStateError
 from src.domain.value_objects.ids import InspectionId, UserId
 from tests.unit.conftest import FakeClock, FakeUnitOfWork
 
@@ -112,7 +112,7 @@ class TestEditInspection:
         use_case: EditInspection,
         user_id: UUID,
     ) -> None:
-        with pytest.raises(InspectionNotFound):
+        with pytest.raises(InspectionNotFoundError):
             await use_case.execute(
                 EditInspectionInput(inspection_id=uuid4(), user_id=user_id, title="x")
             )
@@ -132,5 +132,6 @@ class TestEditInspection:
 
         with pytest.raises(InvalidStateError):
             await use_case.execute(
-                EditInspectionInput(inspection_id=existing_inspection_id, user_id=user_id, title="fail")
+                EditInspectionInput(
+                    inspection_id=existing_inspection_id, user_id=user_id, title="fail")
             )

@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class InspectionStatus(str, Enum):
+class InspectionStatus(StrEnum):
     DRAFT = "draft"
     IN_PROGRESS = "in_progress"
     SUBMITTED = "submitted"
