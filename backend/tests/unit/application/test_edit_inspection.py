@@ -9,7 +9,6 @@ from src.application.use_cases.create_inspection import CreateInspection
 from src.application.use_cases.edit_inspection import EditInspection
 from src.domain.exceptions import InspectionNotFound, InvalidStateError
 from src.domain.value_objects.ids import InspectionId, UserId
-from src.domain.value_objects.version import Version
 from tests.unit.conftest import FakeClock, FakeUnitOfWork
 
 
@@ -33,7 +32,10 @@ class TestEditInspection:
 
     @pytest.fixture
     async def existing_inspection_id(
-        self, fake_uow: FakeUnitOfWork, fixed_clock: FakeClock, user_id: UUID
+        self,
+        fake_uow: FakeUnitOfWork,
+        fixed_clock: FakeClock,
+        user_id: UUID,
     ) -> UUID:
         create = CreateInspection(uow=fake_uow, clock=fixed_clock)
         output = await create.execute(
@@ -44,27 +46,47 @@ class TestEditInspection:
 
     @pytest.mark.asyncio
     async def test_edit_updates_title(
-        self, use_case: EditInspection, existing_inspection_id: UUID, user_id: UUID, fake_uow: FakeUnitOfWork
+        self,
+        use_case: EditInspection,
+        existing_inspection_id: UUID,
+        user_id: UUID,
+        fake_uow: FakeUnitOfWork,
     ) -> None:
         await use_case.execute(
-            EditInspectionInput(inspection_id=existing_inspection_id, user_id=user_id, title="Updated Title")
+            EditInspectionInput(
+                inspection_id=existing_inspection_id,
+                user_id=user_id,
+                title="Updated Title",
+            )
         )
         saved = await fake_uow.inspections.get(InspectionId(existing_inspection_id))
         assert saved.title == "Updated Title"
 
     @pytest.mark.asyncio
     async def test_edit_updates_location(
-        self, use_case: EditInspection, existing_inspection_id: UUID, user_id: UUID, fake_uow: FakeUnitOfWork
+        self,
+        use_case: EditInspection,
+        existing_inspection_id: UUID,
+        user_id: UUID,
+        fake_uow: FakeUnitOfWork,
     ) -> None:
         await use_case.execute(
-            EditInspectionInput(inspection_id=existing_inspection_id, user_id=user_id, location="New Location")
+            EditInspectionInput(
+                inspection_id=existing_inspection_id,
+                user_id=user_id,
+                location="New Location",
+            )
         )
         saved = await fake_uow.inspections.get(InspectionId(existing_inspection_id))
         assert saved.location == "New Location"
 
     @pytest.mark.asyncio
     async def test_edit_increments_version(
-        self, use_case: EditInspection, existing_inspection_id: UUID, user_id: UUID, fake_uow: FakeUnitOfWork
+        self,
+        use_case: EditInspection,
+        existing_inspection_id: UUID,
+        user_id: UUID,
+        fake_uow: FakeUnitOfWork,
     ) -> None:
         output = await use_case.execute(
             EditInspectionInput(inspection_id=existing_inspection_id, user_id=user_id, title="v1")
@@ -73,7 +95,11 @@ class TestEditInspection:
 
     @pytest.mark.asyncio
     async def test_edit_commits_unit_of_work(
-        self, use_case: EditInspection, existing_inspection_id: UUID, user_id: UUID, fake_uow: FakeUnitOfWork
+        self,
+        use_case: EditInspection,
+        existing_inspection_id: UUID,
+        user_id: UUID,
+        fake_uow: FakeUnitOfWork,
     ) -> None:
         await use_case.execute(
             EditInspectionInput(inspection_id=existing_inspection_id, user_id=user_id, title="x")
@@ -82,7 +108,9 @@ class TestEditInspection:
 
     @pytest.mark.asyncio
     async def test_edit_nonexistent_inspection_raises(
-        self, use_case: EditInspection, user_id: UUID
+        self,
+        use_case: EditInspection,
+        user_id: UUID,
     ) -> None:
         with pytest.raises(InspectionNotFound):
             await use_case.execute(
@@ -91,7 +119,11 @@ class TestEditInspection:
 
     @pytest.mark.asyncio
     async def test_edit_closed_inspection_raises(
-        self, use_case: EditInspection, existing_inspection_id: UUID, user_id: UUID, fake_uow: FakeUnitOfWork
+        self,
+        use_case: EditInspection,
+        existing_inspection_id: UUID,
+        user_id: UUID,
+        fake_uow: FakeUnitOfWork,
     ) -> None:
         inspection = await fake_uow.inspections.get(InspectionId(existing_inspection_id))
         inspection.submit(actor=UserId(user_id), now=use_case._clock.now())
