@@ -25,13 +25,17 @@ from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.ports.auth_context import AuthContext
+from src.application.ports.clock import Clock
 from src.application.ports.password_hasher import PasswordHasher
 from src.application.ports.token_provider import InvalidTokenError, TokenProvider
+from src.application.ports.unit_of_work import UnitOfWork
 from src.application.ports.user_repository import UserRepository
 from src.config.settings import Settings, get_settings
 from src.infrastructure.auth.jwt_auth_context import JwtAuthContext
 from src.infrastructure.auth.jwt_provider import JwtTokenProvider
 from src.infrastructure.auth.password_hasher import BcryptPasswordHasher
+from src.infrastructure.clock import SystemClock
+from src.infrastructure.persistence.sqlalchemy import SQLAlchemyUnitOfWork
 from src.infrastructure.persistence.sqlalchemy.session import get_session_factory
 from src.infrastructure.persistence.sqlalchemy.user_repository import SQLAlchemyUserRepository
 
@@ -75,6 +79,18 @@ SessionDep = Annotated[AsyncSession, Depends(get_db_session)]
 
 def get_user_repository(session: SessionDep) -> UserRepository:
     return SQLAlchemyUserRepository(session)
+
+
+def get_unit_of_work() -> UnitOfWork:
+    return SQLAlchemyUnitOfWork(get_session_factory())
+
+
+def get_clock() -> Clock:
+    return SystemClock()
+
+
+UnitOfWorkDep = Annotated[UnitOfWork, Depends(get_unit_of_work)]
+ClockDep = Annotated[Clock, Depends(get_clock)]
 
 
 # ----------------------------------------------------------------------

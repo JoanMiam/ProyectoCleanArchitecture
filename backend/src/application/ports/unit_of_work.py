@@ -4,11 +4,13 @@ from abc import ABC, abstractmethod
 from types import TracebackType
 from typing import Self
 
+from src.application.ports.changeset_repository import ChangeSetRepository
 from src.application.ports.inspection_repository import InspectionRepository
 
 
 class UnitOfWork(ABC):
     inspections: InspectionRepository
+    changesets: ChangeSetRepository
 
     @abstractmethod
     async def commit(self) -> None: ...

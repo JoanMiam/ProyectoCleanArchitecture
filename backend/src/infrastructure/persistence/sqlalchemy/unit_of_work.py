@@ -14,6 +14,9 @@ from typing import Self
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.application.ports.unit_of_work import UnitOfWork
+from src.infrastructure.persistence.sqlalchemy.changeset_repository import (
+    SQLAlchemyChangeSetRepository,
+)
 from src.infrastructure.persistence.sqlalchemy.repositories import SQLAlchemyInspectionRepository
 
 
@@ -25,6 +28,7 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
     async def __aenter__(self) -> Self:
         self._session = self._session_factory()
         self.inspections = SQLAlchemyInspectionRepository(self._session)
+        self.changesets = SQLAlchemyChangeSetRepository(self._session)
         return self
 
     async def __aexit__(
