@@ -31,6 +31,7 @@ class AppliedChangeDTO:
     """Información de un cambio aceptado y aplicado."""
     change_id: UUID
     new_version: int
+    server_delta: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

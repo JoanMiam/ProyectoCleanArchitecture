@@ -7,11 +7,11 @@ children with a fresh set produced by the mapper. The cascade configured on the
 """
  
 from __future__ import annotations
- 
+
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
- 
+
 from src.application.ports.inspection_repository import InspectionFilters, InspectionRepository
 from src.domain.entities.inspection import Inspection
 from src.domain.exceptions import InspectionNotFoundError
