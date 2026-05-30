@@ -24,7 +24,7 @@ jobs:
       - run: lint-imports
 
   test:
-    name: Unit tests
+    name: Tests (unit + integration)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -36,7 +36,7 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -e ".[dev]"
-      - run: pytest tests/unit/ -v --cov=src --cov-report=xml --cov-fail-under=85
+      - run: pytest tests/ -v --cov=src --cov-report=xml --cov-fail-under=85
       - uses: actions/upload-artifact@v4
         if: always()
         with:
