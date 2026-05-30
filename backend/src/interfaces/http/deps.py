@@ -26,6 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.ports.auth_context import AuthContext
 from src.application.ports.clock import Clock
+from src.application.ports.file_storage_gateway import FileStorageGateway
 from src.application.ports.password_hasher import PasswordHasher
 from src.application.ports.token_provider import InvalidTokenError, TokenProvider
 from src.application.ports.unit_of_work import UnitOfWork
@@ -38,6 +39,7 @@ from src.infrastructure.clock import SystemClock
 from src.infrastructure.persistence.sqlalchemy import SQLAlchemyUnitOfWork
 from src.infrastructure.persistence.sqlalchemy.session import get_session_factory
 from src.infrastructure.persistence.sqlalchemy.user_repository import SQLAlchemyUserRepository
+from src.infrastructure.storage.minio_storage import MinIOStorageGateway
 
 _BEARER_PREFIX = "Bearer "
 
@@ -59,6 +61,15 @@ def get_token_provider(settings: SettingsDep) -> TokenProvider:
         secret=settings.jwt_secret,
         algorithm=settings.jwt_algorithm,
         ttl_minutes=settings.jwt_expire_minutes,
+    )
+
+
+def get_file_storage_gateway(settings: SettingsDep) -> FileStorageGateway:
+    return MinIOStorageGateway(
+        endpoint_url=settings.s3_endpoint,
+        access_key=settings.s3_access_key,
+        secret_key=settings.s3_secret_key,
+        bucket=settings.s3_bucket,
     )
 
 
@@ -91,6 +102,7 @@ def get_clock() -> Clock:
 
 UnitOfWorkDep = Annotated[UnitOfWork, Depends(get_unit_of_work)]
 ClockDep = Annotated[Clock, Depends(get_clock)]
+FileStorageGatewayDep = Annotated[FileStorageGateway, Depends(get_file_storage_gateway)]
 
 
 # ----------------------------------------------------------------------
