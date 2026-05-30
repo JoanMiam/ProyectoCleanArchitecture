@@ -40,7 +40,7 @@ Enforced por `import-linter` en CI — un PR que viola la regla no mergea.
 - `use_cases/` ✅: CreateInspection, EditInspection
 - `use_cases/` 🔲: GetInspection, ListInspections, AddObservation, SubmitInspection (INS-13), ApplyChangesBatch (INS-6), ResolveConflict (INS-7), AttachEvidence (INS-9), Login (INS-14)
 - `dto/` ✅ parcial: CreateInspectionDTO, EditInspectionDTO
-- `dto/` 🔲: sync DTOs — ChangeSet, SyncBatch, ServerDelta, ConflictResult (INS-2)
+- `dto/` ✅: sync DTOs — ChangeSet, SyncBatch, ServerDelta, ConflictResult (INS-2)
 
 **Sin imports de infrastructure/ o interfaces/.**
 

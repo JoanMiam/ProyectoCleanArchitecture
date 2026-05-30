@@ -16,7 +16,7 @@ from src.domain.events import (
     ObservationEdited,
     ObservationRemoved,
 )
-from src.domain.exceptions import InvalidStateError, ObservationNotFound
+from src.domain.exceptions import InvalidStateError, ObservationNotFoundError
 from src.domain.value_objects.ids import (
     EvidenceId,
     InspectionId,
@@ -141,7 +141,9 @@ class Inspection:
                 )
             )
 
-    def remove_observation(self, observation_id: ObservationId, actor: UserId, now: datetime) -> None:
+    def remove_observation(
+            self, observation_id: ObservationId, actor: UserId, now: datetime
+    ) -> None:
         self._assert_editable()
         obs = self._get_observation(observation_id)
         self.observations = [o for o in self.observations if o.id != observation_id]
@@ -243,6 +245,6 @@ class Inspection:
         for obs in self.observations:
             if obs.id == observation_id:
                 return obs
-        raise ObservationNotFound(
+        raise ObservationNotFoundError(
             f"Observation '{observation_id}' not found in inspection '{self.id}'."
         )

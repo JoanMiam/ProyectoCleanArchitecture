@@ -13,9 +13,8 @@ from src.application.ports.clock import Clock
 from src.application.ports.inspection_repository import InspectionFilters, InspectionRepository
 from src.application.ports.unit_of_work import UnitOfWork
 from src.domain.entities.inspection import Inspection
-from src.domain.exceptions import InspectionNotFound
+from src.domain.exceptions import InspectionNotFoundError
 from src.domain.value_objects.ids import InspectionId
-
 
 # ------------------------------------------------------------------
 # Fakes
@@ -39,7 +38,7 @@ class FakeInspectionRepo(InspectionRepository):
 
     async def get(self, id: InspectionId) -> Inspection:
         if id not in self._store:
-            raise InspectionNotFound(f"Inspection '{id}' not found.")
+            raise InspectionNotFoundError(f"Inspection '{id}' not found.")
         return self._store[id]
 
     async def save(self, inspection: Inspection) -> None:

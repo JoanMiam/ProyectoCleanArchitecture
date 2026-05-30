@@ -6,17 +6,17 @@ class InvalidStateError(DomainError):
     """Operation not allowed in current aggregate state."""
 
 
-class InspectionNotFound(DomainError):
+class InspectionNotFoundError(DomainError):
     """Inspection does not exist."""
 
 
-class ObservationNotFound(DomainError):
+class ObservationNotFoundError(DomainError):
     """Observation does not exist in this inspection."""
 
 
-class EvidenceNotFound(DomainError):
+class EvidenceNotFoundError(DomainError):
     """Evidence reference does not exist."""
 
 
-class InvariantViolation(DomainError):
+class InvariantViolationError(DomainError):
     """A domain invariant was violated."""

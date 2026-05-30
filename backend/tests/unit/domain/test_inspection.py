@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 import pytest
 
 from src.domain.entities.inspection import Inspection
-from src.domain.exceptions import InvalidStateError, ObservationNotFound
+from src.domain.exceptions import InvalidStateError, ObservationNotFoundError
 from src.domain.value_objects.ids import EvidenceId, InspectionId, UserId
 from src.domain.value_objects.inspection_status import InspectionStatus
 from src.domain.value_objects.version import Version
@@ -124,7 +124,7 @@ class TestObservations:
         from src.domain.value_objects.ids import ObservationId
 
         inspection = make_inspection()
-        with pytest.raises(ObservationNotFound):
+        with pytest.raises(ObservationNotFoundError):
             inspection.edit_observation(ObservationId(uuid4()), notes="x")
 
     def test_remove_observation_removes_it(self) -> None:
