@@ -4,14 +4,12 @@ import os
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from passlib.context import CryptContext
+import bcrypt
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from src.config.settings import get_settings
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-DEFAULT_ADMIN_EMAIL = "admin@inspections.local"
+DEFAULT_ADMIN_EMAIL = "admin@example.com"
 
 
 async def seed() -> None:
@@ -36,7 +34,7 @@ async def seed() -> None:
             {
                 "id": str(user_id),
                 "email": DEFAULT_ADMIN_EMAIL,
-                "hash": pwd_context.hash(admin_password),
+                "hash": bcrypt.hashpw(admin_password.encode(), bcrypt.gensalt()).decode(),
                 "role": "admin",
                 "created_at": now,
                 "updated_at": now,
