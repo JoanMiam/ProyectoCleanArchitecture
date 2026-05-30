@@ -33,9 +33,12 @@ Enforced por `import-linter` en CI — un PR que viola la regla no mergea.
 **Sin imports de FastAPI, SQLAlchemy, Pydantic, Redis.** Solo stdlib.
 
 ### application/
-- `ports/`: interfaces (ABCs) — InspectionRepository, UnitOfWork, Clock, AuthContext, etc.
-- `use_cases/`: orquestaciones — CreateInspection, EditInspection, ApplyChangesBatch, etc.
-- `dto/`: dataclasses neutras (no Pydantic) para input/output de use cases
+- `ports/` ✅ parcial: InspectionRepository, UnitOfWork, Clock, AuthContext
+- `ports/` 🔲: ChangeSetRepository, ConflictRepository, AuditRepository, FileStorageGateway, QueueGateway (INS-4)
+- `use_cases/` ✅: CreateInspection, EditInspection
+- `use_cases/` 🔲: GetInspection, ListInspections, AddObservation, SubmitInspection (INS-13), ApplyChangesBatch (INS-6), ResolveConflict (INS-7), AttachEvidence (INS-9), Login (INS-14)
+- `dto/` ✅ parcial: CreateInspectionDTO, EditInspectionDTO
+- `dto/` ✅: sync DTOs — ChangeSet, SyncBatch, ServerDelta, ConflictResult (INS-2)
 
 **Sin imports de infrastructure/ o interfaces/.**
 
