@@ -18,6 +18,8 @@ venv/
 htmlcov/
 .coverage
 coverage.xml
+coverage/
+*.tsbuildinfo
 
 # Node / Web
 node_modules/
