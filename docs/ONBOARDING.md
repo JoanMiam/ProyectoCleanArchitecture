@@ -17,7 +17,7 @@
 ```bash
 # 1. Clonar
 git clone <repo-url>
-cd ProyectoClean
+cd ProyectoCleanArchitecture
 
 # 2. Variables de entorno
 cp .env.example .env
