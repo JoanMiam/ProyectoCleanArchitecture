@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.config.settings import get_settings
-from src.interfaces.http.routers import auth, evidences, inspections, sync
+from src.interfaces.http.routers import audit, auth, evidences, inspections, sync
 
 settings = get_settings()
 
@@ -26,6 +26,7 @@ app.include_router(auth.router)
 app.include_router(inspections.router)
 app.include_router(evidences.router)
 app.include_router(sync.router)
+app.include_router(audit.router)
 
 
 @app.get("/healthz", tags=["health"])

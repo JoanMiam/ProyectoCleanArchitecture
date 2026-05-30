@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, status
 
 from src.application.use_cases.apply_changes_batch import ApplyChangesBatch
 from src.domain.exceptions import DomainError, InspectionNotFoundError, InvalidStateError
-from src.interfaces.http.deps import AuthContextDep, UnitOfWorkDep
+from src.interfaces.http.deps import AuditRepoDep, AuthContextDep, UnitOfWorkDep
 from src.interfaces.http.schemas.sync import SyncBatchRequest, SyncResponse
 
 router = APIRouter(prefix="/sync", tags=["sync"])
@@ -23,9 +23,10 @@ async def apply_sync_batch(
     body: SyncBatchRequest,
     auth: AuthContextDep,
     uow: UnitOfWorkDep,
+    audit_repo: AuditRepoDep,
 ) -> SyncResponse:
     auth.current_user_id()
-    use_case = ApplyChangesBatch(uow=uow)
+    use_case = ApplyChangesBatch(uow=uow, audit_repo=audit_repo)
     try:
         output = await use_case.execute(body.to_dto())
     except DomainError as exc:

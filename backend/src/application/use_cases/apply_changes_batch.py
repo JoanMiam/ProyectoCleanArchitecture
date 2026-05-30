@@ -8,6 +8,7 @@ from src.application.dto.sync_dto import (
     SyncBatchDTO,
     SyncResponseDTO,
 )
+from src.application.ports.audit_repository import AuditRepository
 from src.application.ports.changeset_repository import ChangeSetRepository
 from src.application.ports.unit_of_work import UnitOfWork
 from src.domain.entities.inspection import Inspection
@@ -24,15 +25,18 @@ class ApplyChangesBatch:
         self,
         uow: UnitOfWork,
         changeset_repo: ChangeSetRepository | None = None,
+        audit_repo: AuditRepository | None = None,
     ) -> None:
         self.uow = uow
         self.changeset_repo = changeset_repo
+        self.audit_repo = audit_repo
 
     async def execute(self, batch: SyncBatchDTO) -> SyncResponseDTO:
         applied_changes: list[AppliedChangeDTO] = []
         rejected_changes: list[RejectedChangeDTO] = []
         server_delta: dict[str, Any] = {"inspections": []}
         any_conflict = False
+        _auditable: list[Inspection] = []
 
         async with self.uow:
             changeset_repo = self.changeset_repo or self.uow.changesets
@@ -96,6 +100,7 @@ class ApplyChangesBatch:
                     location=location,
                     now=datetime.now(UTC).replace(tzinfo=None),
                 )
+                _auditable.append(inspection)
                 await self.uow.inspections.save(inspection)
 
                 change_delta = {"inspections": [self._inspection_delta(inspection)]}
@@ -109,6 +114,12 @@ class ApplyChangesBatch:
                 self._merge_server_delta(server_delta, change_delta)
 
             await self.uow.commit()
+
+        if self.audit_repo is not None:
+            for insp in _auditable:
+                events = insp.collect_events()
+                if events:
+                    await self.audit_repo.append_many(events)
 
         return SyncResponseDTO(
             batch_id=batch.batch_id,

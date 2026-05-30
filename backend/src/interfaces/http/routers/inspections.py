@@ -12,7 +12,7 @@ from src.application.use_cases.edit_inspection import EditInspection
 from src.application.use_cases.get_inspection import GetInspection
 from src.application.use_cases.list_inspections import ListInspections
 from src.domain.exceptions import DomainError, InspectionNotFoundError, InvalidStateError
-from src.interfaces.http.deps import AuthContextDep, ClockDep, UnitOfWorkDep
+from src.interfaces.http.deps import AuditRepoDep, AuthContextDep, ClockDep, UnitOfWorkDep
 from src.interfaces.http.schemas.inspection import (
     CreateInspectionRequest,
     EditInspectionRequest,
@@ -42,8 +42,9 @@ async def create_inspection(
     auth: AuthContextDep,
     uow: UnitOfWorkDep,
     clock: ClockDep,
+    audit_repo: AuditRepoDep,
 ) -> InspectionMutationResponse:
-    use_case = CreateInspection(uow=uow, clock=clock)
+    use_case = CreateInspection(uow=uow, clock=clock, audit_repo=audit_repo)
     output = await use_case.execute(
         CreateInspectionInput(
             title=body.title,
