@@ -1,5 +1,6 @@
 """SQLAlchemy persistence adapters."""
 
+from src.infrastructure.persistence.sqlalchemy.audit_repository import SQLAlchemyAuditRepository
 from src.infrastructure.persistence.sqlalchemy.changeset_repository import (
     SQLAlchemyChangeSetRepository,
 )
@@ -14,6 +15,7 @@ from src.infrastructure.persistence.sqlalchemy.session import (
 from src.infrastructure.persistence.sqlalchemy.unit_of_work import SQLAlchemyUnitOfWork
  
 __all__ = [
+    "SQLAlchemyAuditRepository",
     "SQLAlchemyChangeSetRepository",
     "SQLAlchemyInspectionRepository",
     "SQLAlchemyUnitOfWork",
