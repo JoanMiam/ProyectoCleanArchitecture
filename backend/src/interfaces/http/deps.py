@@ -24,6 +24,7 @@ from typing import Annotated
 from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.application.ports.audit_repository import AuditRepository
 from src.application.ports.auth_context import AuthContext
 from src.application.ports.clock import Clock
 from src.application.ports.password_hasher import PasswordHasher
@@ -36,6 +37,7 @@ from src.infrastructure.auth.jwt_provider import JwtTokenProvider
 from src.infrastructure.auth.password_hasher import BcryptPasswordHasher
 from src.infrastructure.clock import SystemClock
 from src.infrastructure.persistence.sqlalchemy import SQLAlchemyUnitOfWork
+from src.infrastructure.persistence.sqlalchemy.audit_repository import SQLAlchemyAuditRepository
 from src.infrastructure.persistence.sqlalchemy.session import get_session_factory
 from src.infrastructure.persistence.sqlalchemy.user_repository import SQLAlchemyUserRepository
 
@@ -91,6 +93,13 @@ def get_clock() -> Clock:
 
 UnitOfWorkDep = Annotated[UnitOfWork, Depends(get_unit_of_work)]
 ClockDep = Annotated[Clock, Depends(get_clock)]
+
+
+def get_audit_repository(session: SessionDep) -> AuditRepository:
+    return SQLAlchemyAuditRepository(session)
+
+
+AuditRepoDep = Annotated[AuditRepository, Depends(get_audit_repository)]
 
 
 # ----------------------------------------------------------------------
