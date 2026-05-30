@@ -97,7 +97,7 @@ async def _read_limited(file: UploadFile, max_size_bytes: int) -> bytes:
     content = await file.read(max_size_bytes + 1)
     if len(content) > max_size_bytes:
         raise HTTPException(
-            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail=f"Evidence file exceeds the {max_size_bytes} byte limit.",
         )
     return content

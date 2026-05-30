@@ -23,39 +23,34 @@ Enforced por `import-linter` en CI — un PR que viola la regla no mergea.
 
 ## Capas
 
-> **Leyenda de estado:** ✅ implementado · 🔲 previsto (pendiente de issue)
-
 ### domain/
-- `entities/` ✅: Inspection (aggregate root), Observation, Evidence
-- `value_objects/` ✅: InspectionStatus, Version, IDs
-- `policies/` 🔲: ConflictPolicy, MergePolicy (INS-3)
-- `events.py` 🔲: domain events — ConflictDetected, ConflictResolved, ChangeApplied (INS-3)
-- `exceptions/` 🔲: DomainError, InvalidStateError
+- `entities/` ✅: Inspection (aggregate root), Observation, Evidence, User
+- `value_objects/` ✅: InspectionStatus (StrEnum), Version, IDs (NewType), ConflictType, ResolutionStrategy
+- `policies/` ✅: ConflictPolicy (optimistic locking), Conflict value object
+- `events.py` ✅: DomainEvent base + InspectionCreated, InspectionSubmitted, InspectionClosed, ObservationAdded, ObservationEdited, ObservationRemoved, EvidenceAttached
+- `exceptions.py` ✅: DomainError, InspectionNotFoundError, ObservationNotFoundError, EvidenceNotFoundError, InvalidStateError
 
 **Sin imports de FastAPI, SQLAlchemy, Pydantic, Redis.** Solo stdlib.
 
 ### application/
-- `ports/` ✅ parcial: InspectionRepository, UnitOfWork, Clock, AuthContext
-- `ports/` 🔲: ChangeSetRepository, ConflictRepository, AuditRepository, FileStorageGateway, QueueGateway (INS-4)
-- `use_cases/` ✅: CreateInspection, EditInspection
-- `use_cases/` 🔲: GetInspection, ListInspections, AddObservation, SubmitInspection (INS-13), ApplyChangesBatch (INS-6), ResolveConflict (INS-7), AttachEvidence (INS-9), Login (INS-14)
-- `dto/` ✅ parcial: CreateInspectionDTO, EditInspectionDTO
-- `dto/` ✅: sync DTOs — ChangeSet, SyncBatch, ServerDelta, ConflictResult (INS-2)
+- `ports/` ✅: InspectionRepository, UnitOfWork, Clock, AuthContext, ChangeSetRepository, ConflictRepository, AuditRepository, FileStorageGateway, QueueGateway, TokenProvider, PasswordHasher, UserRepository
+- `use_cases/` ✅: CreateInspection, EditInspection, GetInspection, ListInspections, AddObservation, SubmitInspection, ApplyChangesBatch, ResolveConflict, AttachEvidence, Login, GetAuditTrail
+- `dto/` ✅: CreateInspectionDTO, EditInspectionDTO, GetInspectionDTO, ListInspectionsDTO, AddObservationDTO, SubmitInspectionDTO, AttachEvidenceDTO, AuditDTO (read model), AuthDTO, SyncDTO
 
 **Sin imports de infrastructure/ o interfaces/.**
 
 ### infrastructure/
-- `persistence/sqlalchemy/` 🔲: modelos ORM, mappers ORM↔Domain, repositorios concretos (INS-5)
-- `storage/minio_storage.py` 🔲: FileStorageGateway impl (INS-9)
-- `queue/` 🔲: QueueGateway impl (INS-4/INS-10)
-- `auth/` 🔲: JWT provider, password hasher (INS-14)
-- `clock/system_clock.py` ✅: Clock impl
+- `persistence/sqlalchemy/` ✅: modelos ORM (Inspection, Observation, Evidence, User, AppliedChange, AuditEvent), mappers ORM↔Domain, SQLAlchemyInspectionRepository, SQLAlchemyUserRepository, SQLAlchemyAuditRepository, SQLAlchemyChangeSetRepository, SQLAlchemyUnitOfWork
+- `storage/minio_storage.py` ✅: MinIOStorageGateway impl (FileStorageGateway)
+- `queue/rq_gateway.py` ✅: RQGateway impl (QueueGateway) con asyncio.to_thread
+- `auth/` ✅: JwtTokenProvider, BcryptPasswordHasher, JwtAuthContext
+- `clock/system_clock.py` ✅: SystemClock impl
 
 ### interfaces/
-- `http/routers/` 🔲: inspections, sync, evidences, auth, audit (INS-8)
-- `http/schemas/` 🔲: Pydantic schemas — solo en esta capa (INS-8)
-- `http/deps.py` 🔲: dependencias FastAPI, AuthContext (INS-14)
-- `workers/` 🔲: RQ workers para audit y proyecciones (INS-10)
+- `http/routers/` ✅: auth, inspections, sync, evidences, audit
+- `http/schemas/` ✅: Pydantic schemas — solo en esta capa (inspection, sync, evidence, audit, auth)
+- `http/deps.py` ✅: dependency providers FastAPI, AuthContext, AuditRepoDep, UnitOfWorkDep, etc.
+- `workers/audit_worker.py` ✅: RQ job para persistir eventos de auditoría
 
 ## C4 — Vista de contenedores
 
@@ -74,6 +69,37 @@ Enforced por `import-linter` en CI — un PR que viola la regla no mergea.
 └──────────────────────────────────────────────────────────────┘
 ```
 
+## API HTTP
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `POST` | `/auth/login` | Autenticación JWT |
+| `POST` | `/inspections` | Crear inspección |
+| `GET` | `/inspections` | Listar inspecciones |
+| `GET` | `/inspections/{id}` | Obtener inspección |
+| `PATCH` | `/inspections/{id}` | Editar inspección |
+| `POST` | `/inspections/{id}/observations` | Agregar observación |
+| `POST` | `/inspections/{id}/submit` | Enviar inspección |
+| `POST` | `/inspections/{id}/evidences` | Adjuntar evidencia |
+| `GET` | `/inspections/{id}/audit` | Audit trail |
+| `POST` | `/sync/batch` | Aplicar lote de cambios offline |
+
+## Flujo de auditoría
+
+```
+Mutation (HTTP) → Use case → async with uow → commit → salir del bloque
+                                                             ↓
+                                               inspection.collect_events()
+                                                             ↓
+                                               AuditRepository.append_many()
+                                                             ↓
+                                               audit_events table (JSONB payload)
+
+GET /inspections/{id}/audit → GetAuditTrail use case → list[AuditEntryDTO]
+```
+
+El `AuditRepository` es independiente de la `UnitOfWork`: append-only, separado de la transacción principal.
+
 ## Protocolo de sincronización
 
 Ver [SYNC_PROTOCOL.md](SYNC_PROTOCOL.md).
@@ -83,11 +109,11 @@ Ver [SYNC_PROTOCOL.md](SYNC_PROTOCOL.md).
 | Tool | Propósito |
 |---|---|
 | Docker Compose | Entorno reproducible |
-| GitHub Actions | CI: lint + type + test en cada PR |
+| GitHub Actions | CI: lint + type + test en cada PR y push a main/develop |
 | Ruff | Linter + formatter Python |
-| mypy (strict) | Type checking Python |
-| import-linter | Enforce regla de dependencias |
-| pytest + coverage | Tests + gate ≥85% en domain/application |
-| dart analyze | Lint Flutter |
+| mypy (strict) | Type checking Python, 106 archivos fuente |
+| import-linter | Enforce regla de dependencias (3 contratos) |
+| pytest + coverage | Tests + gate ≥85% cobertura |
+| dart analyze | Lint Flutter (extensión futura) |
 | ESLint + Prettier | Lint web |
 | vitest | Tests web |
