@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from src.application.dto.audit_dto import AuditEntryDTO
 from src.domain.events import DomainEvent
 from src.domain.value_objects.ids import InspectionId
 
@@ -20,4 +21,4 @@ class AuditRepository(ABC):
     @abstractmethod
     async def list_for_inspection(
         self, inspection_id: InspectionId
-    ) -> list[DomainEvent]: ...
+    ) -> list[AuditEntryDTO]: ...
